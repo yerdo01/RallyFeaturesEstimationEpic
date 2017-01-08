@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RallyFeaturesEstimationEpic</title>
+
+    <script type="text/javascript" src="/apps/2.1/sdk.js"></script>
+
+    <script type="text/javascript">
+        Rally.onReady(function () {
+                Ext.define("CustomApp",{extend:"Rally.app.App",componentCls:"app",launch:function(){this._calcPerliminaryEstimate()},_createTree:function(features){Ext.create("Rally.data.wsapi.TreeStoreBuilder").build({models:["portfolioitem/epic"],autoLoad:!0,enableHierarchy:!0}).then({success:function(store){this.add({xtype:"rallytreegrid",store:store,context:this.getContext(),enableEditing:!0,shouldShowRowActionsColumn:!0,enableBulkEdit:!0,enableRanking:!1,columnCfgs:["Name","Owner","Project","PercentDoneByStoryCount","PercentDoneByStoryPlanEstimate","PreliminaryEstimate","PreliminaryEstimateValue",{text:"Epic PreliminaryEstimateValue",dataIndex:"Name",renderer:function(value){var peVal=null;return Ext.Array.each(features,function(epicitem){var name=epicitem.Name;name==value&&(peVal=epicitem.PEValue)}),peVal}}]})},scope:this})},_onStoreBuilt:function(store){this.add({xtype:"rallytreegrid",store:store,context:this.getContext(),enableEditing:!0,shouldShowRowActionsColumn:!0,enableBulkEdit:!0,enableRanking:!1,columnCfgs:["Name","Owner","PreliminaryEstimateValue",{text:"User Stories",dataIndex:"Name",renderer:function(value){var html=[];return Ext.Array.each(value,function(userstory){html.push('<a href="'+Rally.nav.Manager.getDetailUrl(userstory)+'">'+userstory.FormattedID+"</a>")}),html.join(", ")}}]})},_calcPerliminaryEstimate:function(){Ext.create("Rally.data.WsapiDataStore",{model:"PortfolioItem/Epic",fetch:["FormattedID","Name","Children","PreliminaryEstimateValue"],pageSize:100,autoLoad:!0,listeners:{load:this._onDataLoaded,scope:this}})},_onDataLoaded:function(store,data){var features=[],pendingstories=data.length;Ext.Array.each(data,function(epic){var f={FormattedID:epic.get("FormattedID"),Name:epic.get("Name"),_ref:epic.get("_ref"),PEValue:epic.get("PreliminaryEstimateValue"),Children:[]},recs=[],stories=epic.getCollection("Children");stories.load({fetch:["FormattedID","Name","PreliminaryEstimateValue"],callback:function(records,operation,success){var total=0;Ext.Array.each(records,function(story){var pe=story.get("PreliminaryEstimateValue");total+=pe;var rec={FormattedID:story.get("FormattedID"),Name:story.get("Name"),_ref:story.get("_ref"),PEValue:story.get("PreliminaryEstimateValue"),Children:[]};recs.push(rec)},this),f.PEValue=total,--pendingstories,0===pendingstories&&this._createTree(features)},scope:this}),features.push(f)},this)},_createGrid:function(features){this.add({xtype:"rallygrid",store:Ext.create("Rally.data.custom.Store",{data:features,pageSize:100}),columnCfgs:[{text:"Formatted ID",dataIndex:"FormattedID",xtype:"templatecolumn",tpl:Ext.create("Rally.ui.renderer.template.FormattedIDTemplate")},{text:"Name",dataIndex:"Name"},{text:"Preliminary Estimate Value",dataIndex:"PEValue"},{text:"User Stories",dataIndex:"UserStories",renderer:function(value){var html=[];return Ext.Array.each(value,function(userstory){html.push('<a href="'+Rally.nav.Manager.getDetailUrl(userstory)+'">'+userstory.FormattedID+"</a>")}),html.join(", ")}}]})}});
+
+            Rally.launchApp('CustomApp', {
+                name:"RallyFeaturesEstimationEpic",
+	            parentRepos:""
+            });
+
+        });
+    </script>
+
+
+    <style type="text/css">
+        
+    </style>
+</head>
+<body>
+</body>
+</html>
